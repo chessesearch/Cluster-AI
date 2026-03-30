@@ -47,11 +47,16 @@ export interface AIBlock {
 
 export interface CanvasBlock {
   id: string;
-  blockId: string; // Reference to AIBlock
-  x: number;
-  y: number;
-  w: number;
-  h: number;
+  type: "chart" | "kpi" | "table" | "alert" | "insight";
+  data: any;
+  gridX: number;
+  gridY: number;
+  gridWidth: number;
+  gridHeight: number;
+  title: string;
+  chartType?: "bar" | "line" | "pie";
+  insightText?: string;
+  alertType?: "warning" | "success" | "info";
 }
 
 export interface DashboardLayout {

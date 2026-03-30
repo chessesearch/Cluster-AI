@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect, useMemo } from "react";
 import { useStore } from "@/store";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
@@ -8,11 +8,20 @@ import {
   ChevronRight, Layout, Grid, MousePointer2, 
   Zap, BarChart3, PieChart, TrendingUp, AlertCircle,
   CheckCircle2, Info, MoreVertical, Download, Share2,
-  Layers, Copy, Settings, RefreshCw, GripVertical
+  Layers, Copy, Settings, RefreshCw, GripVertical,
+  Move, LayoutGrid, X, ArrowUpRight, ArrowDownRight
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { AI_SUGGESTIONS } from "@/src/mockData";
 import { AIBlock, CanvasBlock } from "@/src/types";
+
+// GRID CONFIGURATION
+const GRID_COLS = 50;
+const GRID_ROWS = 50;
+const DEFAULT_BLOCK_W = 8;
+const DEFAULT_BLOCK_H = 8;
+const MIN_BLOCK_W = 4;
+const MIN_BLOCK_H = 4;
 
 export const VisualCanvasView = () => {
   const { 
@@ -23,20 +32,37 @@ export const VisualCanvasView = () => {
   const [isGenerating, setIsGenerating] = useState(false);
   const [showSuggestions, setShowSuggestions] = useState(true);
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [activeBlockId, setActiveBlockId] = useState<string | null>(null);
+  const [zoom, setZoom] = useState(1);
   const canvasRef = useRef<HTMLDivElement>(null);
+
+  // Calculate cell size based on canvas width
+  const [cellSize, setCellSize] = useState(20);
+
+  useEffect(() => {
+    const updateCellSize = () => {
+      if (canvasRef.current) {
+        const width = canvasRef.current.clientWidth;
+        setCellSize((width / GRID_COLS) * zoom);
+      }
+    };
+    updateCellSize();
+    window.addEventListener("resize", updateCellSize);
+    return () => window.removeEventListener("resize", updateCellSize);
+  }, [zoom]);
 
   const handleAddFromSuggestion = (suggestion: any) => {
     setIsGenerating(true);
-    // Simulate multi-block generation
     setTimeout(() => {
       const newBlocks: AIBlock[] = [
         {
           id: Math.random().toString(36).substr(2, 9),
           type: "chart",
-          title: `${suggestion.label} - Trend Analysis`,
+          title: `${suggestion.label} - Trend`,
           content: { data: [45, 52, 38, 65, 48, 72], labels: ["Jan", "Feb", "Mar", "Apr", "May", "Jun"] },
           insightText: "Significant upward trend detected in the last quarter.",
           timestamp: Date.now(),
+          chartType: "bar"
         },
         {
           id: Math.random().toString(36).substr(2, 9),
@@ -52,18 +78,40 @@ export const VisualCanvasView = () => {
     }, 1500);
   };
 
-  const handleDragToCanvas = (block: AIBlock) => {
-    const id = Math.random().toString(36).substr(2, 9);
-    // Find a free spot or just place it at the top
-    const newCanvasBlock: CanvasBlock = {
-      id,
-      blockId: block.id,
-      x: 0,
-      y: 0,
-      w: 4, // 4 columns
-      h: 4, // 4 rows
-    };
-    addCanvasBlock(newCanvasBlock);
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    const blockId = e.dataTransfer.getData("blockId");
+    const block = aiBlocks.find(b => b.id === blockId);
+    
+    if (block && canvasRef.current) {
+      const rect = canvasRef.current.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      const y = e.clientY - rect.top;
+      
+      // Calculate grid coordinates
+      const gridX = Math.floor(x / cellSize);
+      const gridY = Math.floor(y / cellSize);
+      
+      const id = Math.random().toString(36).substr(2, 9);
+      addCanvasBlock({
+        id,
+        type: block.type,
+        data: block.content,
+        gridX: Math.max(0, Math.min(gridX, GRID_COLS - DEFAULT_BLOCK_W)),
+        gridY: Math.max(0, Math.min(gridY, GRID_ROWS - DEFAULT_BLOCK_H)),
+        gridWidth: DEFAULT_BLOCK_W,
+        gridHeight: DEFAULT_BLOCK_H,
+        title: block.title,
+        chartType: block.chartType,
+        insightText: block.insightText,
+        alertType: block.alertType
+      });
+    }
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = "copy";
   };
 
   return (
@@ -154,11 +202,14 @@ export const VisualCanvasView = () => {
                 </div>
               )}
               {aiBlocks.map(block => (
-                <motion.div
+                <div
                   key={block.id}
-                  layoutId={block.id}
+                  draggable
+                  onDragStart={(e: React.DragEvent) => {
+                    e.dataTransfer.setData("blockId", block.id);
+                    e.dataTransfer.effectAllowed = "copy";
+                  }}
                   className="flex-shrink-0 w-64 h-full rounded-xl bg-white/5 border border-white/10 p-3 flex flex-col gap-2 cursor-grab active:cursor-grabbing hover:border-cyan-500/30 transition-all group relative"
-                  onClick={() => handleDragToCanvas(block)}
                 >
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
@@ -166,18 +217,18 @@ export const VisualCanvasView = () => {
                       <span className="text-[10px] font-bold text-white/60 truncate max-w-[120px]">{block.title}</span>
                     </div>
                     <div className="opacity-0 group-hover:opacity-100 transition-opacity">
-                      <Plus className="w-3.5 h-3.5 text-cyan-400" />
+                      <GripVertical className="w-3.5 h-3.5 text-cyan-400" />
                     </div>
                   </div>
                   <div className="flex-1 bg-white/5 rounded-lg flex items-center justify-center">
                     {block.type === "chart" ? (
                       <TrendingUp className="w-6 h-6 text-cyan-400/20" />
                     ) : (
-                      <span className="text-lg font-bold text-cyan-400/40">{block.content.value}</span>
+                      <span className="text-lg font-bold text-cyan-400/40">{block.content?.value || "N/A"}</span>
                     )}
                   </div>
                   <p className="text-[9px] text-white/30 line-clamp-1 italic">{block.insightText}</p>
-                </motion.div>
+                </div>
               ))}
             </div>
           </div>
@@ -186,123 +237,43 @@ export const VisualCanvasView = () => {
         {/* CANVAS: Grid Layout */}
         <div 
           ref={canvasRef}
-          className="flex-1 relative overflow-auto custom-scrollbar p-8 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] bg-fixed"
+          onDrop={handleDrop}
+          onDragOver={handleDragOver}
+          className="flex-1 relative overflow-auto custom-scrollbar bg-[#050505] select-none"
+          style={{
+            backgroundImage: `
+              linear-gradient(to right, rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+              linear-gradient(to bottom, rgba(255, 255, 255, 0.03) 1px, transparent 1px)
+            `,
+            backgroundSize: `${cellSize}px ${cellSize}px`,
+            width: `${GRID_COLS * cellSize}px`,
+            height: `${GRID_ROWS * cellSize}px`,
+            minWidth: "100%",
+            minHeight: "100%"
+          }}
         >
-          {/* Grid Overlay */}
-          <div className="absolute inset-0 pointer-events-none opacity-[0.03]" 
-               style={{ backgroundImage: 'radial-gradient(circle, white 1px, transparent 1px)', backgroundSize: '40px 40px' }} />
-
-          <div className="grid grid-cols-12 gap-4 auto-rows-[100px] relative min-h-full">
-            {canvasBlocks.map(canvasBlock => {
-              const blockData = aiBlocks.find(b => b.id === canvasBlock.blockId);
-              if (!blockData) return null;
-
-              return (
-                <motion.div
-                  key={canvasBlock.id}
-                  layout
-                  className={cn(
-                    "rounded-2xl glass-card border border-white/10 p-5 flex flex-col gap-4 group relative overflow-hidden",
-                    "hover:border-cyan-500/30 transition-all duration-500"
-                  )}
-                  style={{
-                    gridColumn: `span ${canvasBlock.w}`,
-                    gridRow: `span ${canvasBlock.h}`,
-                  }}
-                >
-                  {/* Block Header */}
-                  <div className="flex items-center justify-between z-10">
-                    <div className="flex items-center gap-3">
-                      <div className="p-2 rounded-xl bg-cyan-500/10 border border-cyan-500/20">
-                        {blockData.type === "chart" ? <BarChart3 className="w-4 h-4 text-cyan-400" /> : <Zap className="w-4 h-4 text-cyan-400" />}
-                      </div>
-                      <div>
-                        <h3 className="text-xs font-bold tracking-tight text-white/90">{blockData.title}</h3>
-                        <p className="text-[9px] text-white/40 uppercase tracking-widest font-medium">AI Generated Insight</p>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-all">
-                      <button className="p-1.5 rounded-lg hover:bg-white/5 text-white/40 transition-colors">
-                        <Maximize2 className="w-3.5 h-3.5" />
-                      </button>
-                      <button 
-                        onClick={() => removeCanvasBlock(canvasBlock.id)}
-                        className="p-1.5 rounded-lg hover:bg-red-500/10 text-white/40 hover:text-red-400 transition-colors"
-                      >
-                        <Trash2 className="w-3.5 h-3.5" />
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* Block Content */}
-                  <div className="flex-1 flex flex-col gap-4 z-10">
-                    <div className="flex-1 bg-white/[0.02] rounded-xl border border-white/5 p-4 flex items-center justify-center relative overflow-hidden">
-                      {blockData.type === "chart" ? (
-                        <div className="w-full h-full flex flex-col gap-2">
-                          <div className="flex-1 flex items-end gap-1 px-2">
-                            {blockData.content.data.map((val: number, i: number) => (
-                              <motion.div 
-                                key={i}
-                                initial={{ height: 0 }}
-                                animate={{ height: `${(val / 80) * 100}%` }}
-                                className="flex-1 bg-gradient-to-t from-cyan-500/40 to-cyan-400/10 rounded-t-sm relative group/bar"
-                              >
-                                <div className="absolute -top-6 left-1/2 -translate-x-1/2 opacity-0 group-hover/bar:opacity-100 transition-opacity text-[8px] font-mono text-cyan-400">
-                                  {val}
-                                </div>
-                              </motion.div>
-                            ))}
-                          </div>
-                          <div className="flex justify-between px-2">
-                            {blockData.content.labels.map((l: string, i: number) => (
-                              <span key={i} className="text-[8px] text-white/20 font-mono uppercase">{l}</span>
-                            ))}
-                          </div>
-                        </div>
-                      ) : (
-                        <div className="flex flex-col items-center gap-2">
-                          <span className="text-4xl font-bold tracking-tighter text-white cyan-glow">{blockData.content.value}</span>
-                          <div className={cn(
-                            "flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold",
-                            blockData.content.trend === "up" ? "bg-green-500/10 text-green-400" : "bg-red-500/10 text-red-400"
-                          )}>
-                            <TrendingUp className={cn("w-3 h-3", blockData.content.trend === "down" && "rotate-180")} />
-                            {blockData.content.change}
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                    
-                    <div className="p-3 rounded-xl bg-white/5 border border-white/5">
-                      <div className="flex items-center gap-2 mb-1">
-                        <Sparkles className="w-3 h-3 text-cyan-400" />
-                        <span className="text-[9px] font-bold text-cyan-400 uppercase tracking-widest">AI Insight</span>
-                      </div>
-                      <p className="text-[10px] text-white/60 leading-relaxed italic">
-                        "{blockData.insightText}"
-                      </p>
-                    </div>
-                  </div>
-
-                  {/* Resize Handles (Visual only for now) */}
-                  <div className="absolute bottom-1 right-1 w-4 h-4 cursor-nwse-resize opacity-0 group-hover:opacity-100 transition-opacity">
-                    <div className="w-full h-full border-r-2 border-b-2 border-white/20 rounded-br-sm" />
-                  </div>
-                </motion.div>
-              );
-            })}
-          </div>
+          {canvasBlocks.map(block => (
+            <GridBlock
+              key={block.id}
+              block={block}
+              cellSize={cellSize}
+              isActive={activeBlockId === block.id}
+              onFocus={() => setActiveBlockId(block.id)}
+              onUpdate={(updates) => updateCanvasBlock(block.id, updates)}
+              onRemove={() => removeCanvasBlock(block.id)}
+            />
+          ))}
 
           {canvasBlocks.length === 0 && (
             <div className="absolute inset-0 flex flex-col items-center justify-center text-white/10 gap-6 pointer-events-none">
               <div className="relative">
-                <Grid className="w-24 h-24 opacity-5" />
+                <LayoutGrid className="w-24 h-24 opacity-5" />
                 <MousePointer2 className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-8 h-8 opacity-20 animate-bounce" />
               </div>
               <div className="text-center space-y-2">
                 <p className="text-lg font-bold tracking-tight uppercase opacity-20">Canvas Empty</p>
                 <p className="text-xs italic opacity-10 max-w-xs">
-                  Generate insights from the left panel and drag them here to build your visual workspace.
+                  Drag insights from the top strip and drop them here to build your visual workspace.
                 </p>
               </div>
             </div>
@@ -311,6 +282,22 @@ export const VisualCanvasView = () => {
 
         {/* Floating Controls */}
         <div className="absolute bottom-6 right-6 flex items-center gap-3 z-50">
+          <div className="flex items-center gap-1 p-1.5 bg-white/5 rounded-2xl border border-white/10 backdrop-blur-xl shadow-2xl">
+            <button 
+              onClick={() => setZoom(Math.max(0.5, zoom - 0.1))}
+              className="p-2 rounded-xl text-white/40 hover:text-white/60 hover:bg-white/5 transition-all"
+            >
+              <Minimize2 className="w-4 h-4" />
+            </button>
+            <span className="text-[10px] font-mono text-white/40 px-2">{Math.round(zoom * 100)}%</span>
+            <button 
+              onClick={() => setZoom(Math.min(2, zoom + 0.1))}
+              className="p-2 rounded-xl text-white/40 hover:text-white/60 hover:bg-white/5 transition-all"
+            >
+              <Maximize2 className="w-4 h-4" />
+            </button>
+          </div>
+
           <button 
             onClick={() => setShowSuggestions(!showSuggestions)}
             className={cn(
@@ -320,19 +307,204 @@ export const VisualCanvasView = () => {
           >
             <Sparkles className="w-5 h-5" />
           </button>
-          <div className="flex items-center gap-1 p-1.5 bg-white/5 rounded-2xl border border-white/10 backdrop-blur-xl shadow-2xl">
-            <button className="p-2 rounded-xl bg-white/10 text-white shadow-inner">
-              <Grid className="w-4 h-4" />
-            </button>
-            <button 
-              onClick={() => setIsFullscreen(!isFullscreen)}
-              className={cn("p-2 rounded-xl transition-colors", isFullscreen ? "bg-cyan-500 text-white" : "text-white/40 hover:text-white/60")}
-            >
-              {isFullscreen ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
-            </button>
-          </div>
+          
+          <button 
+            onClick={() => setIsFullscreen(!isFullscreen)}
+            className={cn("p-3 rounded-2xl border transition-all backdrop-blur-xl bg-white/5 border-white/10 text-white/60 hover:bg-white/10")}
+          >
+            {isFullscreen ? <Minimize2 className="w-5 h-5" /> : <Maximize2 className="w-5 h-5" />}
+          </button>
         </div>
       </div>
     </div>
+  );
+};
+
+const GridBlock = ({ 
+  block, cellSize, isActive, onFocus, onUpdate, onRemove 
+}: { 
+  block: CanvasBlock, 
+  cellSize: number, 
+  isActive: boolean, 
+  onFocus: () => void,
+  onUpdate: (updates: Partial<CanvasBlock>) => void,
+  onRemove: () => void
+}) => {
+  const [isDragging, setIsDragging] = useState(false);
+  const [isResizing, setIsResizing] = useState(false);
+  const dragStartPos = useRef({ x: 0, y: 0, gridX: 0, gridY: 0 });
+  const resizeStartPos = useRef({ x: 0, y: 0, gridW: 0, gridH: 0 });
+
+  const handleMouseDown = (e: React.MouseEvent) => {
+    onFocus();
+    setIsDragging(true);
+    dragStartPos.current = {
+      x: e.clientX,
+      y: e.clientY,
+      gridX: block.gridX,
+      gridY: block.gridY
+    };
+
+    const onMouseMove = (moveEvent: MouseEvent) => {
+      const deltaX = moveEvent.clientX - dragStartPos.current.x;
+      const deltaY = moveEvent.clientY - dragStartPos.current.y;
+      
+      const newGridX = Math.max(0, Math.min(GRID_COLS - block.gridWidth, dragStartPos.current.gridX + Math.round(deltaX / cellSize)));
+      const newGridY = Math.max(0, Math.min(GRID_ROWS - block.gridHeight, dragStartPos.current.gridY + Math.round(deltaY / cellSize)));
+      
+      if (newGridX !== block.gridX || newGridY !== block.gridY) {
+        onUpdate({ gridX: newGridX, gridY: newGridY });
+      }
+    };
+
+    const onMouseUp = () => {
+      setIsDragging(false);
+      window.removeEventListener("mousemove", onMouseMove);
+      window.removeEventListener("mouseup", onMouseUp);
+    };
+
+    window.addEventListener("mousemove", onMouseMove);
+    window.addEventListener("mouseup", onMouseUp);
+  };
+
+  const handleResizeStart = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setIsResizing(true);
+    resizeStartPos.current = {
+      x: e.clientX,
+      y: e.clientY,
+      gridW: block.gridWidth,
+      gridH: block.gridHeight
+    };
+
+    const onMouseMove = (moveEvent: MouseEvent) => {
+      const deltaX = moveEvent.clientX - resizeStartPos.current.x;
+      const deltaY = moveEvent.clientY - resizeStartPos.current.y;
+      
+      const newGridW = Math.max(MIN_BLOCK_W, Math.min(GRID_COLS - block.gridX, resizeStartPos.current.gridW + Math.round(deltaX / cellSize)));
+      const newGridH = Math.max(MIN_BLOCK_H, Math.min(GRID_ROWS - block.gridY, resizeStartPos.current.gridH + Math.round(deltaY / cellSize)));
+      
+      if (newGridW !== block.gridWidth || newGridH !== block.gridHeight) {
+        onUpdate({ gridWidth: newGridW, gridHeight: newGridH });
+      }
+    };
+
+    const onMouseUp = () => {
+      setIsResizing(false);
+      window.removeEventListener("mousemove", onMouseMove);
+      window.removeEventListener("mouseup", onMouseUp);
+    };
+
+    window.addEventListener("mousemove", onMouseMove);
+    window.addEventListener("mouseup", onMouseUp);
+  };
+
+  return (
+    <motion.div
+      initial={false}
+      animate={{
+        left: block.gridX * cellSize,
+        top: block.gridY * cellSize,
+        width: block.gridWidth * cellSize,
+        height: block.gridHeight * cellSize,
+        zIndex: isActive ? 40 : 10
+      }}
+      transition={{ type: "spring", stiffness: 400, damping: 40 }}
+      className={cn(
+        "absolute rounded-2xl glass-card border flex flex-col group overflow-hidden",
+        isActive ? "border-cyan-500/50 shadow-[0_0_40px_rgba(34,211,238,0.15)]" : "border-white/10",
+        isDragging && "opacity-80 scale-[0.98] cursor-grabbing",
+        !isDragging && "hover:border-cyan-500/30 transition-all"
+      )}
+    >
+      {/* Header */}
+      <div 
+        onMouseDown={handleMouseDown}
+        className="h-10 px-4 border-b border-white/5 bg-white/[0.03] flex items-center justify-between cursor-grab active:cursor-grabbing"
+      >
+        <div className="flex items-center gap-2">
+          {block.type === "chart" ? <BarChart3 className="w-3.5 h-3.5 text-cyan-400" /> : <Zap className="w-3.5 h-3.5 text-cyan-400" />}
+          <span className="text-[10px] font-bold text-white/80 truncate max-w-[150px]">{block.title}</span>
+        </div>
+        <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+          <button 
+            onClick={(e) => { e.stopPropagation(); onRemove(); }}
+            className="p-1.5 rounded-lg hover:bg-red-500/10 text-white/30 hover:text-red-400 transition-colors"
+          >
+            <Trash2 className="w-3 h-3" />
+          </button>
+        </div>
+      </div>
+
+      {/* Content */}
+      <div className="flex-1 p-4 flex flex-col gap-3 overflow-hidden">
+        <div className="flex-1 bg-white/[0.02] rounded-xl border border-white/5 p-3 flex items-center justify-center relative">
+          {block.type === "chart" ? (
+            <div className="w-full h-full flex flex-col gap-2">
+              <div className="flex-1 flex items-end gap-1">
+                {(block.data?.data || []).map((val: number, i: number) => (
+                  <div 
+                    key={i}
+                    style={{ height: `${(val / 80) * 100}%` }}
+                    className="flex-1 bg-gradient-to-t from-cyan-500/40 to-cyan-400/10 rounded-t-sm relative group/bar"
+                  >
+                    <div className="absolute -top-5 left-1/2 -translate-x-1/2 opacity-0 group-hover/bar:opacity-100 transition-opacity text-[8px] font-mono text-cyan-400">
+                      {val}
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <div className="flex justify-between">
+                {(block.data?.labels || []).map((l: string, i: number) => (
+                  <span key={i} className="text-[7px] text-white/20 font-mono uppercase">{l}</span>
+                ))}
+              </div>
+            </div>
+          ) : block.type === "kpi" ? (
+            <div className="flex flex-col items-center gap-1">
+              <span className="text-3xl font-bold tracking-tighter text-white cyan-glow">{block.data?.value || "N/A"}</span>
+              {block.data?.change && (
+                <div className={cn(
+                  "flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-bold",
+                  block.data.trend === "up" ? "bg-green-500/10 text-green-400" : "bg-red-500/10 text-red-400"
+                )}>
+                  {block.data.trend === "up" ? <ArrowUpRight className="w-2.5 h-2.5" /> : <ArrowDownRight className="w-2.5 h-2.5" />}
+                  {block.data.change}
+                </div>
+              )}
+            </div>
+          ) : (
+            <div className="text-center">
+               <span className="text-[10px] text-white/40 italic">Visualization coming soon</span>
+            </div>
+          )}
+        </div>
+
+        {block.insightText && (
+          <div className="p-2 rounded-lg bg-white/5 border border-white/5">
+            <div className="flex items-center gap-1.5 mb-0.5">
+              <Sparkles className="w-2.5 h-2.5 text-cyan-400" />
+              <span className="text-[8px] font-bold text-cyan-400 uppercase tracking-widest">AI Insight</span>
+            </div>
+            <p className="text-[9px] text-white/50 leading-relaxed italic line-clamp-2">
+              "{block.insightText}"
+            </p>
+          </div>
+        )}
+      </div>
+
+      {/* Resize Handle */}
+      <div 
+        onMouseDown={handleResizeStart}
+        className="absolute bottom-0 right-0 w-6 h-6 cursor-nwse-resize z-20 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+      >
+        <div className="w-1.5 h-1.5 border-r border-b border-white/40 rounded-br-sm" />
+      </div>
+
+      {/* Snap Indicator (only when dragging/resizing) */}
+      {(isDragging || isResizing) && (
+        <div className="absolute inset-0 border-2 border-cyan-500/20 pointer-events-none animate-pulse" />
+      )}
+    </motion.div>
   );
 };
