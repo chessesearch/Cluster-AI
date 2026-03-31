@@ -39,7 +39,7 @@ interface AppState {
 const { employees, tasks } = generateMockData();
 
 export const useStore = create<AppState>((set) => ({
-  activeTab: "Visual Canvas",
+  activeTab: "Data Storage",
   setActiveTab: (tab) => set({ activeTab: tab }),
   employees,
   tasks,
