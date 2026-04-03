@@ -12,7 +12,7 @@ export const Navbar = () => {
 
   const tabs: { id: AppTab; label: string; icon: any }[] = [
     { id: "Data Storage", label: "Data Storage", icon: Database },
-    { id: "Visual Canvas", label: "Visual Canvas", icon: Zap },
+    { id: "Visual View", label: "Visual View", icon: Zap },
     { id: "File Workspace", label: "File Workspace", icon: FolderTree },
   ];
 

@@ -4,7 +4,7 @@ import React, { useEffect, useState } from "react";
 import { useStore } from "@/store";
 import { Navbar } from "@/components/Navbar";
 import { DataStorageView } from "@/components/DataStorageView";
-import { VisualCanvasView } from "@/components/VisualCanvasView";
+import { VisualView } from "@/components/VisualView";
 import { FileWorkspaceView } from "@/components/FileWorkspaceView";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -33,7 +33,7 @@ export default function Home() {
             className="h-full w-full"
           >
             {activeTab === "Data Storage" && <DataStorageView />}
-            {activeTab === "Visual Canvas" && <VisualCanvasView />}
+            {activeTab === "Visual View" && <VisualView />}
             {activeTab === "File Workspace" && <FileWorkspaceView />}
           </motion.div>
         </AnimatePresence>

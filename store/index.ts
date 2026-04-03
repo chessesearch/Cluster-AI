@@ -43,7 +43,7 @@ export const useStore = create<AppState>((set) => ({
   setActiveTab: (tab) => set({ activeTab: tab }),
   employees,
   tasks,
-  aiBlocks: INITIAL_AI_BLOCKS,
+  aiBlocks: [],
   addAIBlock: (block) => set((state) => ({ aiBlocks: [block, ...state.aiBlocks] })),
   removeAIBlock: (id) => set((state) => ({ aiBlocks: state.aiBlocks.filter((b) => b.id !== id) })),
   canvasBlocks: [],
@@ -60,7 +60,7 @@ export const useStore = create<AppState>((set) => ({
   workspacePanels: [
     { id: "1", type: "ai", x: 50, y: 50, width: 400, height: 500, zIndex: 1, title: "AI Assistant" },
     { id: "2", type: "data", x: 500, y: 50, width: 600, height: 400, zIndex: 1, title: "Data Explorer" },
-    { id: "3", type: "canvas", x: 50, y: 600, width: 1050, height: 300, zIndex: 1, title: "Visual Canvas" },
+    { id: "3", type: "canvas", x: 50, y: 600, width: 1050, height: 300, zIndex: 1, title: "Visual View" },
   ],
   addWorkspacePanel: (panel) => set((state) => ({ workspacePanels: [...state.workspacePanels, panel] })),
   updateWorkspacePanel: (id, updates) =>

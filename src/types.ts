@@ -65,7 +65,7 @@ export interface DashboardLayout {
   blocks: CanvasBlock[];
 }
 
-export type AppTab = "Data Storage" | "Visual Canvas" | "File Workspace";
+export type AppTab = "Data Storage" | "Visual View" | "File Workspace";
 
 export interface AISuggestion {
   id: string;
