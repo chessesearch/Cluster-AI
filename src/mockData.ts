@@ -74,6 +74,36 @@ const genBoxPlotData = () => [
   { name: 'Group C', min: 5, q1: 20, median: 40, q3: 75, max: 100 },
 ];
 
+const genCSATTrend = () => [
+  { name: 'Jan', satisfied: 65, neutral: 20, unsatisfied: 15 },
+  { name: 'Feb', satisfied: 68, neutral: 22, unsatisfied: 10 },
+  { name: 'Mar', satisfied: 72, neutral: 18, unsatisfied: 10 },
+  { name: 'Apr', satisfied: 70, neutral: 20, unsatisfied: 10 },
+  { name: 'May', satisfied: 75, neutral: 15, unsatisfied: 10 },
+  { name: 'Jun', satisfied: 80, neutral: 12, unsatisfied: 8 },
+  { name: 'Jul', satisfied: 78, neutral: 15, unsatisfied: 7 },
+  { name: 'Aug', satisfied: 85, neutral: 12, unsatisfied: 3 },
+  { name: 'Sept', satisfied: 82, neutral: 14, unsatisfied: 4 },
+  { name: 'Oct', satisfied: 84, neutral: 12, unsatisfied: 4 },
+  { name: 'Nov', satisfied: 86, neutral: 10, unsatisfied: 4 },
+  { name: 'Dec', satisfied: 88, neutral: 8, unsatisfied: 4 },
+];
+
+const genMonthlySales = () => [
+  { name: 'Jan', value: 45000 },
+  { name: 'Feb', value: 52000 },
+  { name: 'Mar', value: 48000 },
+  { name: 'Apr', value: 61000 },
+  { name: 'May', value: 55000 },
+  { name: 'Jun', value: 190350, highlight: true },
+  { name: 'Jul', value: 68000 },
+  { name: 'Aug', value: 72000 },
+  { name: 'Sept', value: 85000 },
+  { name: 'Oct', value: 78000 },
+  { name: 'Nov', value: 92000 },
+  { name: 'Dec', value: 110000 },
+];
+
 export const INITIAL_AI_BLOCKS: AIBlock[] = [
   {
     id: "a1",
@@ -81,7 +111,7 @@ export const INITIAL_AI_BLOCKS: AIBlock[] = [
     title: "Performance Distribution",
     content: genTimeData(7),
     chartType: "histogram",
-    timestamp: Date.now()
+    timestamp: 1712995200000
   },
   {
     id: "a2",
@@ -89,7 +119,7 @@ export const INITIAL_AI_BLOCKS: AIBlock[] = [
     title: "Revenue vs Cost",
     content: genTimeData(12),
     chartType: "area",
-    timestamp: Date.now()
+    timestamp: 1712995200000
   },
   {
     id: "a3",
@@ -97,7 +127,7 @@ export const INITIAL_AI_BLOCKS: AIBlock[] = [
     title: "Project Correlation",
     content: genScatterData(15),
     chartType: "scatter",
-    timestamp: Date.now()
+    timestamp: 1712995200000
   },
   {
     id: "a4",
@@ -105,7 +135,7 @@ export const INITIAL_AI_BLOCKS: AIBlock[] = [
     title: "Salary Ranges",
     content: genBoxPlotData(),
     chartType: "boxplot",
-    timestamp: Date.now()
+    timestamp: 1712995200000
   },
   {
     id: "a5",
@@ -118,63 +148,74 @@ export const INITIAL_AI_BLOCKS: AIBlock[] = [
       { name: "Ads", value: 200 },
     ],
     chartType: "pie",
-    timestamp: Date.now()
+    timestamp: 1712995200000
   }
 ];
 
 export const DEFAULT_DASHBOARD_BLOCKS: any[] = [
+  // ROW 1: KPIs & Sales Bar Chart
   {
     id: "d1",
     type: "kpi",
-    title: "Active Users",
-    data: { value: "14,284", change: "+12.5%", trend: "up" },
-    gridX: 0, gridY: 0, gridWidth: 8, gridHeight: 8
+    title: "Total sales",
+    data: { value: "$ 4,9M", change: "+18%", trend: "up", subtitle: "to previous year" },
+    gridX: 0, gridY: 0, gridWidth: 6, gridHeight: 6
   },
   {
     id: "d2",
-    type: "chart",
-    title: "Revenue Streams",
-    data: genTimeData(6),
-    chartType: "area",
-    gridX: 8, gridY: 0, gridWidth: 16, gridHeight: 12,
-    insightText: "Strong growth in organic channels this month."
+    type: "kpi",
+    title: "Total expenses",
+    data: { value: "$ 860K", change: "-25%", trend: "down", subtitle: "to previous year" },
+    gridX: 6, gridY: 0, gridWidth: 6, gridHeight: 6
   },
   {
     id: "d3",
     type: "chart",
-    title: "Employee distribution",
-    data: [
-      { name: "Tech", value: 45 },
-      { name: "HR", value: 12 },
-      { name: "Sales", value: 28 },
-      { name: "Marketing", value: 15 },
-    ],
-    chartType: "pie",
-    gridX: 24, gridY: 0, gridWidth: 10, gridHeight: 12
+    title: "Sales analytics",
+    data: genMonthlySales(),
+    chartType: "bar",
+    gridX: 12, gridY: 0, gridWidth: 18, gridHeight: 12,
+    insightText: "Income: June '24 (AI implementation) $190,350 +25%"
   },
+  // ROW 2: More KPIs (below row 1 KPIs)
   {
     id: "d4",
-    type: "chart",
-    title: "Efficiency Scatter",
-    data: genScatterData(20),
-    chartType: "scatter",
-    gridX: 0, gridY: 8, gridWidth: 8, gridHeight: 12
+    type: "kpi",
+    title: "Customer satisfaction score",
+    data: { value: "85%", change: "+15%", trend: "up", subtitle: "to previous year" },
+    gridX: 0, gridY: 6, gridWidth: 6, gridHeight: 6
   },
   {
     id: "d5",
-    type: "chart",
-    title: "Department Comparison",
-    data: genTimeData(5),
-    chartType: "bar",
-    gridX: 8, gridY: 12, gridWidth: 12, gridHeight: 10
+    type: "kpi",
+    title: "Overall AI impact score",
+    data: { value: "92", subtitle: "based on a weighted average of the KPIs" },
+    gridX: 6, gridY: 6, gridWidth: 6, gridHeight: 6
   },
+  // ROW 3: Large Bottom Charts
   {
     id: "d6",
     type: "chart",
-    title: "Performance BoxPlot",
-    data: genBoxPlotData(),
-    chartType: "boxplot",
-    gridX: 20, gridY: 12, gridWidth: 14, gridHeight: 10
+    title: "Customer satisfaction analysis",
+    data: genCSATTrend(),
+    chartType: "line",
+    gridX: 0, gridY: 12, gridWidth: 15, gridHeight: 12,
+    insightText: "CSAT August '24: 350 +21%"
+  },
+  {
+    id: "d7",
+    type: "chart",
+    title: "Expenses analytics",
+    data: [
+      { name: "salaries", value: 400000, color: "#818cf8" },
+      { name: "operational costs", value: 180000, color: "#f472b6" },
+      { name: "marketing", value: 160000, color: "#fbbf24" },
+      { name: "supply chain", value: 120000, color: "#34d399" },
+      { name: "costs saved", value: 150000, color: "#22d3ee" },
+    ],
+    chartType: "pie",
+    gridX: 15, gridY: 12, gridWidth: 15, gridHeight: 12,
+    insightText: "$150,000 costs saved | 30% reduced overstock"
   }
 ];
 

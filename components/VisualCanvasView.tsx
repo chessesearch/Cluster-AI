@@ -331,20 +331,40 @@ const ChartRenderer = ({ type, data, chartType }: { type: string, data: any, cha
   const colors = ["#22d3ee", "#818cf8", "#f472b6", "#fbbf24", "#34d399"];
 
   switch (chartType) {
+    case "line":
+      return (
+        <ResponsiveContainer width="100%" height="100%">
+          <LineChart data={data}>
+            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(255,255,255,0.05)" />
+            <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 9, fill: 'rgba(255,255,255,0.3)' }} />
+            <YAxis hide />
+            <Tooltip 
+              contentStyle={{ background: 'rgba(5, 5, 5, 0.9)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px', fontSize: '10px' }}
+            />
+            <Line type="monotone" dataKey="satisfied" stroke="#818cf8" strokeWidth={2} dot={{ r: 2, fill: '#818cf8' }} activeDot={{ r: 4 }} />
+            <Line type="monotone" dataKey="neutral" stroke="#fbbf24" strokeWidth={2} dot={{ r: 2, fill: '#fbbf24' }} activeDot={{ r: 4 }} />
+            <Line type="monotone" dataKey="unsatisfied" stroke="#f472b6" strokeWidth={2} dot={{ r: 2, fill: '#f472b6' }} activeDot={{ r: 4 }} />
+          </LineChart>
+        </ResponsiveContainer>
+      );
     case "bar":
     case "histogram":
       return (
         <ResponsiveContainer width="100%" height="100%">
           <BarChart data={data}>
-            <XAxis dataKey="name" hide />
+            <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 9, fill: 'rgba(255,255,255,0.3)' }} />
             <YAxis hide domain={[0, 'auto']} />
             <Tooltip 
-              contentStyle={{ background: 'rgba(5, 5, 5, 0.8)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', fontSize: '10px' }}
+              contentStyle={{ background: 'rgba(5, 5, 5, 0.9)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px', fontSize: '10px' }}
               itemStyle={{ color: '#22d3ee' }}
             />
             <Bar dataKey="value" radius={[4, 4, 0, 0]}>
               {data?.map((entry: any, index: number) => (
-                <Cell key={`cell-${index}`} fill={colors[index % colors.length]} fillOpacity={0.8} />
+                <Cell 
+                  key={`cell-${index}`} 
+                  fill={entry.highlight ? "#818cf8" : "rgba(129, 140, 248, 0.2)"} 
+                  stroke={entry.highlight ? "#818cf8" : "none"}
+                />
               ))}
             </Bar>
           </BarChart>
@@ -352,24 +372,37 @@ const ChartRenderer = ({ type, data, chartType }: { type: string, data: any, cha
       );
     case "pie":
       return (
-        <ResponsiveContainer width="100%" height="100%">
-          <RePieChart>
-            <Pie
-              data={data}
-              innerRadius="60%"
-              outerRadius="80%"
-              paddingAngle={5}
-              dataKey="value"
-            >
-              {data?.map((entry: any, index: number) => (
-                <Cell key={`cell-${index}`} fill={colors[index % colors.length]} />
-              ))}
-            </Pie>
-            <Tooltip 
-              contentStyle={{ background: 'rgba(5, 5, 5, 0.8)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', fontSize: '10px' }}
-            />
-          </RePieChart>
-        </ResponsiveContainer>
+        <div className="w-full h-full flex items-center">
+          <div className="flex-1 h-full">
+            <ResponsiveContainer width="100%" height="100%">
+              <RePieChart>
+                <Pie
+                  data={data}
+                  innerRadius="65%"
+                  outerRadius="85%"
+                  paddingAngle={8}
+                  dataKey="value"
+                  stroke="none"
+                >
+                  {data?.map((entry: any, index: number) => (
+                    <Cell key={`cell-${index}`} fill={entry.color || colors[index % colors.length]} />
+                  ))}
+                </Pie>
+                <Tooltip 
+                  contentStyle={{ background: 'rgba(5, 5, 5, 0.9)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px', fontSize: '10px' }}
+                />
+              </RePieChart>
+            </ResponsiveContainer>
+          </div>
+          <div className="flex-none w-32 flex flex-col gap-2 pr-2">
+            {data?.map((item: any, i: number) => (
+              <div key={i} className="flex flex-col">
+                <span className="text-[7px] text-white/40 uppercase font-bold tracking-tight">{item.name}</span>
+                <span className="text-[9px] text-white font-mono">${(item.value / 1000).toLocaleString()}k</span>
+              </div>
+            ))}
+          </div>
+        </div>
       );
     case "area":
       return (
@@ -551,17 +584,23 @@ const GridBlock = ({
       <div className="flex-1 p-4 flex flex-col gap-3 overflow-hidden">
         <div className="flex-1 bg-white/[0.02] rounded-xl border border-white/5 p-3 flex items-center justify-center relative overflow-hidden">
           {block.type === "kpi" ? (
-            <div className="flex flex-col items-center gap-1">
-              <span className="text-3xl font-bold tracking-tighter text-white cyan-glow">{block.data?.value || "N/A"}</span>
-              {block.data?.change && (
-                <div className={cn(
-                  "flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-bold",
-                  block.data.trend === "up" ? "bg-green-500/10 text-green-400" : "bg-red-500/10 text-red-400"
-                )}>
-                  {block.data.trend === "up" ? <ArrowUpRight className="w-2.5 h-2.5" /> : <ArrowDownRight className="w-2.5 h-2.5" />}
-                  {block.data.change}
-                </div>
-              )}
+            <div className="w-full h-full flex flex-col justify-center gap-1">
+              <span className="text-3xl font-bold tracking-tighter text-white">{block.data?.value || "N/A"}</span>
+              <div className="flex flex-col gap-0.5">
+                {block.data?.change && (
+                  <div className={cn(
+                    "flex items-center gap-1 text-[10px] font-bold",
+                    block.data.trend === "up" ? "text-green-400" : "text-red-400"
+                  )}>
+                    {block.data.trend === "up" ? <ArrowUpRight className="w-3 h-3" /> : <ArrowDownRight className="w-3 h-3" />}
+                    {block.data.change}
+                    <span className="text-white/20 font-normal ml-1">{block.data.subtitle}</span>
+                  </div>
+                )}
+                {!block.data?.change && block.data?.subtitle && (
+                  <span className="text-[9px] text-white/30 leading-tight">{block.data.subtitle}</span>
+                )}
+              </div>
             </div>
           ) : (
             <ChartRenderer type={block.type} data={block.data} chartType={block.chartType} />
