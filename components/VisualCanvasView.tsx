@@ -12,7 +12,12 @@ import {
   Move, LayoutGrid, X, ArrowUpRight, ArrowDownRight
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { AI_SUGGESTIONS } from "@/src/mockData";
+import { 
+  ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, 
+  Cell, PieChart as RePieChart, Pie, AreaChart, Area, 
+  ScatterChart, Scatter, ZAxis, CartesianGrid, LineChart, Line
+} from 'recharts';
+import { AI_SUGGESTIONS, DEFAULT_DASHBOARD_BLOCKS } from "@/src/mockData";
 import { AIBlock, CanvasBlock } from "@/src/types";
 
 // GRID CONFIGURATION
@@ -320,6 +325,112 @@ export const VisualCanvasView = () => {
   );
 };
 
+const ChartRenderer = ({ type, data, chartType }: { type: string, data: any, chartType?: string }) => {
+  if (type !== "chart") return null;
+
+  const colors = ["#22d3ee", "#818cf8", "#f472b6", "#fbbf24", "#34d399"];
+
+  switch (chartType) {
+    case "bar":
+    case "histogram":
+      return (
+        <ResponsiveContainer width="100%" height="100%">
+          <BarChart data={data}>
+            <XAxis dataKey="name" hide />
+            <YAxis hide domain={[0, 'auto']} />
+            <Tooltip 
+              contentStyle={{ background: 'rgba(5, 5, 5, 0.8)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', fontSize: '10px' }}
+              itemStyle={{ color: '#22d3ee' }}
+            />
+            <Bar dataKey="value" radius={[4, 4, 0, 0]}>
+              {data?.map((entry: any, index: number) => (
+                <Cell key={`cell-${index}`} fill={colors[index % colors.length]} fillOpacity={0.8} />
+              ))}
+            </Bar>
+          </BarChart>
+        </ResponsiveContainer>
+      );
+    case "pie":
+      return (
+        <ResponsiveContainer width="100%" height="100%">
+          <RePieChart>
+            <Pie
+              data={data}
+              innerRadius="60%"
+              outerRadius="80%"
+              paddingAngle={5}
+              dataKey="value"
+            >
+              {data?.map((entry: any, index: number) => (
+                <Cell key={`cell-${index}`} fill={colors[index % colors.length]} />
+              ))}
+            </Pie>
+            <Tooltip 
+              contentStyle={{ background: 'rgba(5, 5, 5, 0.8)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', fontSize: '10px' }}
+            />
+          </RePieChart>
+        </ResponsiveContainer>
+      );
+    case "area":
+      return (
+        <ResponsiveContainer width="100%" height="100%">
+          <AreaChart data={data}>
+            <defs>
+              <linearGradient id="colorVal" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="5%" stopColor="#22d3ee" stopOpacity={0.3}/>
+                <stop offset="95%" stopColor="#22d3ee" stopOpacity={0}/>
+              </linearGradient>
+            </defs>
+            <XAxis dataKey="name" hide />
+            <YAxis hide />
+            <Tooltip 
+              contentStyle={{ background: 'rgba(5, 5, 5, 0.8)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', fontSize: '10px' }}
+            />
+            <Area type="monotone" dataKey="value" stroke="#22d3ee" fillOpacity={1} fill="url(#colorVal)" />
+          </AreaChart>
+        </ResponsiveContainer>
+      );
+    case "scatter":
+      return (
+        <ResponsiveContainer width="100%" height="100%">
+          <ScatterChart>
+            <XAxis type="number" dataKey="x" hide />
+            <YAxis type="number" dataKey="y" hide />
+            <ZAxis type="number" dataKey="z" range={[50, 400]} />
+            <Tooltip cursor={{ strokeDasharray: '3 3' }} contentStyle={{ background: 'rgba(5, 5, 5, 0.8)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', fontSize: '10px' }} />
+            <Scatter name="Points" data={data} fill="#22d3ee" fillOpacity={0.6} />
+          </ScatterChart>
+        </ResponsiveContainer>
+      );
+    case "boxplot":
+      return (
+        <div className="w-full h-full flex items-center justify-around px-4">
+          {data?.map((item: any, i: number) => (
+            <div key={i} className="flex flex-col items-center gap-2 h-full justify-center">
+              <div className="w-0.5 h-12 bg-white/20 relative">
+                <div className="absolute top-0 left-1/2 -translate-x-1/2 w-4 h-0.5 bg-white/40" />
+                <div 
+                  className="absolute left-1/2 -translate-x-1/2 w-6 border border-cyan-500/50 bg-cyan-500/10 rounded-sm"
+                  style={{ top: '20%', height: '50%' }}
+                >
+                  <div className="absolute top-1/2 w-full h-0.5 bg-cyan-400" />
+                </div>
+                <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-4 h-0.5 bg-white/40" />
+              </div>
+              <span className="text-[8px] text-white/40">{item.name}</span>
+            </div>
+          ))}
+        </div>
+      );
+    default:
+      return (
+        <div className="text-center">
+          <span className="text-[10px] text-white/40 italic">Visualization coming soon</span>
+        </div>
+      );
+  }
+};
+
 const GridBlock = ({ 
   block, cellSize, isActive, onFocus, onUpdate, onRemove 
 }: { 
@@ -438,29 +549,8 @@ const GridBlock = ({
 
       {/* Content */}
       <div className="flex-1 p-4 flex flex-col gap-3 overflow-hidden">
-        <div className="flex-1 bg-white/[0.02] rounded-xl border border-white/5 p-3 flex items-center justify-center relative">
-          {block.type === "chart" ? (
-            <div className="w-full h-full flex flex-col gap-2">
-              <div className="flex-1 flex items-end gap-1">
-                {(block.data?.data || []).map((val: number, i: number) => (
-                  <div 
-                    key={i}
-                    style={{ height: `${(val / 80) * 100}%` }}
-                    className="flex-1 bg-gradient-to-t from-cyan-500/40 to-cyan-400/10 rounded-t-sm relative group/bar"
-                  >
-                    <div className="absolute -top-5 left-1/2 -translate-x-1/2 opacity-0 group-hover/bar:opacity-100 transition-opacity text-[8px] font-mono text-cyan-400">
-                      {val}
-                    </div>
-                  </div>
-                ))}
-              </div>
-              <div className="flex justify-between">
-                {(block.data?.labels || []).map((l: string, i: number) => (
-                  <span key={i} className="text-[7px] text-white/20 font-mono uppercase">{l}</span>
-                ))}
-              </div>
-            </div>
-          ) : block.type === "kpi" ? (
+        <div className="flex-1 bg-white/[0.02] rounded-xl border border-white/5 p-3 flex items-center justify-center relative overflow-hidden">
+          {block.type === "kpi" ? (
             <div className="flex flex-col items-center gap-1">
               <span className="text-3xl font-bold tracking-tighter text-white cyan-glow">{block.data?.value || "N/A"}</span>
               {block.data?.change && (
@@ -474,9 +564,7 @@ const GridBlock = ({
               )}
             </div>
           ) : (
-            <div className="text-center">
-               <span className="text-[10px] text-white/40 italic">Visualization coming soon</span>
-            </div>
+            <ChartRenderer type={block.type} data={block.data} chartType={block.chartType} />
           )}
         </div>
 
@@ -508,3 +596,4 @@ const GridBlock = ({
     </motion.div>
   );
 };
+

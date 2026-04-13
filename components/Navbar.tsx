@@ -11,8 +11,8 @@ export const Navbar = () => {
   const { activeTab, setActiveTab } = useStore();
 
   const tabs: { id: AppTab; label: string; icon: any }[] = [
-    { id: "Visual Canvas", label: "Visual Canvas", icon: Zap },
     { id: "Data Storage", label: "Data Storage", icon: Database },
+    { id: "Visual Canvas", label: "Visual Canvas", icon: Zap },
     { id: "File Workspace", label: "File Workspace", icon: FolderTree },
   ];
 

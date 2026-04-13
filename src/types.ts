@@ -39,7 +39,7 @@ export interface AIBlock {
   type: "chart" | "kpi" | "table" | "alert" | "insight";
   title: string;
   content: any;
-  chartType?: "bar" | "line" | "pie";
+  chartType?: "bar" | "line" | "pie" | "histogram" | "scatter" | "boxplot" | "area";
   insightText?: string;
   alertType?: "warning" | "success" | "info";
   timestamp: number;
@@ -54,7 +54,7 @@ export interface CanvasBlock {
   gridWidth: number;
   gridHeight: number;
   title: string;
-  chartType?: "bar" | "line" | "pie";
+  chartType?: "bar" | "line" | "pie" | "histogram" | "scatter" | "boxplot" | "area";
   insightText?: string;
   alertType?: "warning" | "success" | "info";
 }

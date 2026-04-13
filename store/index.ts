@@ -1,6 +1,6 @@
 import { create } from "zustand";
 import { Employee, Task, AIBlock, CanvasBlock, DashboardLayout, AppTab, WorkspacePanel, WorkspaceMode, LayoutNode } from "../src/types";
-import { generateMockData, INITIAL_AI_BLOCKS } from "../src/mockData";
+import { generateMockData, INITIAL_AI_BLOCKS, DEFAULT_DASHBOARD_BLOCKS } from "../src/mockData";
 
 interface AppState {
   activeTab: AppTab;
@@ -39,14 +39,14 @@ interface AppState {
 const { employees, tasks } = generateMockData();
 
 export const useStore = create<AppState>((set) => ({
-  activeTab: "Visual Canvas",
+  activeTab: "Data Storage",
   setActiveTab: (tab) => set({ activeTab: tab }),
   employees,
   tasks,
   aiBlocks: INITIAL_AI_BLOCKS,
   addAIBlock: (block) => set((state) => ({ aiBlocks: [block, ...state.aiBlocks] })),
   removeAIBlock: (id) => set((state) => ({ aiBlocks: state.aiBlocks.filter((b) => b.id !== id) })),
-  canvasBlocks: [],
+  canvasBlocks: DEFAULT_DASHBOARD_BLOCKS,
   addCanvasBlock: (block) => set((state) => ({ canvasBlocks: [...state.canvasBlocks, block] })),
   updateCanvasBlock: (id, updates) =>
     set((state) => ({

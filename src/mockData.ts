@@ -55,158 +55,157 @@ export function generateMockData() {
   return { employees, tasks };
 }
 
+// Helper to generate chart data
+const genTimeData = (len = 10) => Array.from({ length: len }, (_, i) => ({
+  name: `Point ${i + 1}`,
+  value: Math.floor(Math.random() * 100),
+  secondary: Math.floor(Math.random() * 80)
+}));
+
+const genScatterData = (len = 20) => Array.from({ length: len }, () => ({
+  x: Math.floor(Math.random() * 100),
+  y: Math.floor(Math.random() * 100),
+  z: Math.floor(Math.random() * 1000)
+}));
+
+const genBoxPlotData = () => [
+  { name: 'Group A', min: 10, q1: 25, median: 45, q3: 70, max: 95 },
+  { name: 'Group B', min: 15, q1: 30, median: 50, q3: 65, max: 90 },
+  { name: 'Group C', min: 5, q1: 20, median: 40, q3: 75, max: 100 },
+];
+
 export const INITIAL_AI_BLOCKS: AIBlock[] = [
   {
-    id: "1",
+    id: "a1",
     type: "chart",
-    title: "Top 10 Performing Employees",
-    content: {},
-    chartType: "bar",
+    title: "Performance Distribution",
+    content: genTimeData(7),
+    chartType: "histogram",
     timestamp: Date.now()
   },
   {
-    id: "2",
-    type: "kpi",
-    title: "Total Revenue",
-    content: { value: "$1.2M", trend: "+12%" },
-    timestamp: Date.now()
-  },
-  {
-    id: "3",
-    type: "insight",
-    title: "Efficiency Alert",
-    content: "Tech department efficiency is 15% above average.",
-    timestamp: Date.now()
-  },
-  {
-    id: "4",
+    id: "a2",
     type: "chart",
-    title: "Salary Distribution",
-    content: {},
+    title: "Revenue vs Cost",
+    content: genTimeData(12),
+    chartType: "area",
+    timestamp: Date.now()
+  },
+  {
+    id: "a3",
+    type: "chart",
+    title: "Project Correlation",
+    content: genScatterData(15),
+    chartType: "scatter",
+    timestamp: Date.now()
+  },
+  {
+    id: "a4",
+    type: "chart",
+    title: "Salary Ranges",
+    content: genBoxPlotData(),
+    chartType: "boxplot",
+    timestamp: Date.now()
+  },
+  {
+    id: "a5",
+    type: "chart",
+    title: "Market Share",
+    content: [
+      { name: "Direct", value: 400 },
+      { name: "Social", value: 300 },
+      { name: "Organic", value: 300 },
+      { name: "Ads", value: 200 },
+    ],
     chartType: "pie",
     timestamp: Date.now()
-  },
+  }
+];
+
+export const DEFAULT_DASHBOARD_BLOCKS: any[] = [
   {
-    id: "5",
+    id: "d1",
     type: "kpi",
-    title: "Active Projects",
-    content: { value: "12", trend: "+2" },
-    timestamp: Date.now()
+    title: "Active Users",
+    data: { value: "14,284", change: "+12.5%", trend: "up" },
+    gridX: 0, gridY: 0, gridWidth: 8, gridHeight: 8
   },
   {
-    id: "6",
+    id: "d2",
     type: "chart",
-    title: "Task Completion Trends",
-    content: {},
-    chartType: "line",
-    timestamp: Date.now()
+    title: "Revenue Streams",
+    data: genTimeData(6),
+    chartType: "area",
+    gridX: 8, gridY: 0, gridWidth: 16, gridHeight: 12,
+    insightText: "Strong growth in organic channels this month."
   },
   {
-    id: "7",
-    type: "alert",
-    title: "Attrition Risk",
-    content: "High risk detected in Sales department.",
-    alertType: "warning",
-    timestamp: Date.now()
+    id: "d3",
+    type: "chart",
+    title: "Employee distribution",
+    data: [
+      { name: "Tech", value: 45 },
+      { name: "HR", value: 12 },
+      { name: "Sales", value: 28 },
+      { name: "Marketing", value: 15 },
+    ],
+    chartType: "pie",
+    gridX: 24, gridY: 0, gridWidth: 10, gridHeight: 12
   },
   {
-    id: "8",
-    type: "table",
-    title: "Recent Tasks",
-    content: [],
-    timestamp: Date.now()
+    id: "d4",
+    type: "chart",
+    title: "Efficiency Scatter",
+    data: genScatterData(20),
+    chartType: "scatter",
+    gridX: 0, gridY: 8, gridWidth: 8, gridHeight: 12
   },
   {
-    id: "9",
-    type: "insight",
-    title: "Workload Correlation",
-    content: "High correlation between workload and performance score.",
-    timestamp: Date.now()
+    id: "d5",
+    type: "chart",
+    title: "Department Comparison",
+    data: genTimeData(5),
+    chartType: "bar",
+    gridX: 8, gridY: 12, gridWidth: 12, gridHeight: 10
   },
   {
-    id: "10",
-    type: "kpi",
-    title: "Avg Performance",
-    content: { value: "84/100", trend: "+5%" },
-    timestamp: Date.now()
+    id: "d6",
+    type: "chart",
+    title: "Performance BoxPlot",
+    data: genBoxPlotData(),
+    chartType: "boxplot",
+    gridX: 20, gridY: 12, gridWidth: 14, gridHeight: 10
   }
 ];
 
 export const AI_SUGGESTIONS: any[] = [
   {
     id: "s1",
-    label: "Top 10 performing employees",
+    label: "Analyze performance distribution",
     blocks: [
-      { type: "chart", title: "Top 10 Performance", content: {}, chartType: "bar" },
-      { type: "insight", title: "Performance Insight", content: "Top performers are mostly from the Tech department." }
+      { type: "chart", title: "Performance Hist", content: genTimeData(10), chartType: "histogram" },
+      { type: "insight", title: "Distribution Insight", content: "Performance is negatively skewed." }
     ]
   },
   {
     id: "s2",
-    label: "Employees at risk",
+    label: "Correlate workload with output",
     blocks: [
-      { type: "alert", title: "At Risk Employees", content: "3 employees show declining performance.", alertType: "warning" },
-      { type: "table", title: "Risk Details", content: [] }
+      { type: "chart", title: "Workload/Output", content: genScatterData(15), chartType: "scatter" }
     ]
   },
   {
     id: "s3",
-    label: "Department productivity comparison",
+    label: "Salary distribution by role",
     blocks: [
-      { type: "chart", title: "Dept Productivity", content: {}, chartType: "bar" },
-      { type: "kpi", title: "Most Productive Dept", content: { value: "Tech", trend: "" } }
+      { type: "chart", title: "Salary Ranges", content: genBoxPlotData(), chartType: "boxplot" }
     ]
   },
   {
     id: "s4",
-    label: "Salary distribution",
+    label: "Regional growth trends",
     blocks: [
-      { type: "chart", title: "Salary Pie", content: {}, chartType: "pie" },
-      { type: "insight", title: "Salary Insight", content: "Salary is well-distributed across departments." }
-    ]
-  },
-  {
-    id: "s5",
-    label: "Workload vs performance correlation",
-    blocks: [
-      { type: "chart", title: "Workload/Perf Correlation", content: {}, chartType: "line" }
-    ]
-  },
-  {
-    id: "s6",
-    label: "Project progress overview",
-    blocks: [
-      { type: "chart", title: "Project Progress", content: {}, chartType: "bar" },
-      { type: "kpi", title: "On-track Projects", content: { value: "85%", trend: "+5%" } }
-    ]
-  },
-  {
-    id: "s7",
-    label: "Team efficiency ranking",
-    blocks: [
-      { type: "table", title: "Team Efficiency", content: [] }
-    ]
-  },
-  {
-    id: "s8",
-    label: "Attrition risk analysis",
-    blocks: [
-      { type: "alert", title: "Attrition Risk", content: "Sales department shows 20% risk.", alertType: "warning" }
-    ]
-  },
-  {
-    id: "s9",
-    label: "KPI summary dashboard",
-    blocks: [
-      { type: "kpi", title: "Total Revenue", content: { value: "$1.2M", trend: "+12%" } },
-      { type: "kpi", title: "Active Users", content: { value: "45k", trend: "+8%" } }
-    ]
-  },
-  {
-    id: "s10",
-    label: "Task completion heatmap",
-    blocks: [
-      { type: "chart", title: "Completion Heatmap", content: {}, chartType: "bar" }
+      { type: "chart", title: "Growth Area", content: genTimeData(12), chartType: "area" }
     ]
   }
 ];
@@ -217,3 +216,4 @@ export const DATA_SOURCES: DataSource[] = [
   { id: "3", name: "MISA", icon: "Database", status: "Connected", size: "4.5 MB", lastUpdated: "10 mins ago" },
   { id: "4", name: "Odoo", icon: "Box", status: "Disconnected", size: "0 KB", lastUpdated: "Never" },
 ];
+
