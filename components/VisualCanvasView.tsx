@@ -21,8 +21,6 @@ import { AI_SUGGESTIONS, DEFAULT_DASHBOARD_BLOCKS } from "@/src/mockData";
 import { AIBlock, CanvasBlock } from "@/src/types";
 
 // GRID CONFIGURATION
-const GRID_COLS = 50;
-const GRID_ROWS = 50;
 const DEFAULT_BLOCK_W = 8;
 const DEFAULT_BLOCK_H = 8;
 const MIN_BLOCK_W = 4;
@@ -31,8 +29,11 @@ const MIN_BLOCK_H = 4;
 export const VisualCanvasView = () => {
   const { 
     aiBlocks, addAIBlock, canvasBlocks, addCanvasBlock, 
-    updateCanvasBlock, removeCanvasBlock 
+    updateCanvasBlock, removeCanvasBlock,
+    canvasSize, setCanvasSize
   } = useStore();
+  
+  const [showGridSettings, setShowGridSettings] = useState(false);
   
   const [isGenerating, setIsGenerating] = useState(false);
   const [showSuggestions, setShowSuggestions] = useState(true);
@@ -48,7 +49,7 @@ export const VisualCanvasView = () => {
     const updateCellSize = () => {
       if (canvasRef.current) {
         const width = canvasRef.current.clientWidth;
-        setCellSize((width / GRID_COLS) * zoom);
+        setCellSize((width / canvasSize.cols) * zoom);
       }
     };
     updateCellSize();
@@ -102,8 +103,8 @@ export const VisualCanvasView = () => {
         id,
         type: block.type,
         data: block.content,
-        gridX: Math.max(0, Math.min(gridX, GRID_COLS - DEFAULT_BLOCK_W)),
-        gridY: Math.max(0, Math.min(gridY, GRID_ROWS - DEFAULT_BLOCK_H)),
+        gridX: Math.max(0, Math.min(gridX, canvasSize.cols - DEFAULT_BLOCK_W)),
+        gridY: Math.max(0, Math.min(gridY, canvasSize.rows - DEFAULT_BLOCK_H)),
         gridWidth: DEFAULT_BLOCK_W,
         gridHeight: DEFAULT_BLOCK_H,
         title: block.title,
@@ -251,8 +252,8 @@ export const VisualCanvasView = () => {
               linear-gradient(to bottom, rgba(255, 255, 255, 0.03) 1px, transparent 1px)
             `,
             backgroundSize: `${cellSize}px ${cellSize}px`,
-            width: `${GRID_COLS * cellSize}px`,
-            height: `${GRID_ROWS * cellSize}px`,
+            width: `${canvasSize.cols * cellSize}px`,
+            height: `${canvasSize.rows * cellSize}px`,
             minWidth: "100%",
             minHeight: "100%"
           }}
@@ -262,6 +263,7 @@ export const VisualCanvasView = () => {
               key={block.id}
               block={block}
               cellSize={cellSize}
+              gridSize={canvasSize}
               isActive={activeBlockId === block.id}
               onFocus={() => setActiveBlockId(block.id)}
               onUpdate={(updates) => updateCanvasBlock(block.id, updates)}
@@ -301,6 +303,53 @@ export const VisualCanvasView = () => {
             >
               <Maximize2 className="w-4 h-4" />
             </button>
+          </div>
+
+          <div className="relative">
+            <button 
+              onClick={() => setShowGridSettings(!showGridSettings)}
+              className={cn(
+                "p-3 rounded-2xl border transition-all shadow-2xl backdrop-blur-xl bg-white/5 border-white/10 text-white/60 hover:bg-white/10",
+                showGridSettings && "bg-cyan-500/10 border-cyan-500/30 text-cyan-400"
+              )}
+            >
+              <LayoutGrid className="w-5 h-5" />
+            </button>
+            
+            <AnimatePresence>
+              {showGridSettings && (
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.9, y: 10 }}
+                  animate={{ opacity: 1, scale: 1, y: 0 }}
+                  exit={{ opacity: 0, scale: 0.9, y: 10 }}
+                  className="absolute bottom-full right-0 mb-4 w-48 bg-[#0A0A0A]/95 backdrop-blur-xl border border-white/10 rounded-2xl p-4 shadow-2xl space-y-4"
+                >
+                  <div className="space-y-3">
+                    <div className="flex flex-col gap-1.5">
+                      <label className="text-[10px] font-bold text-white/30 uppercase tracking-widest">Grid Columns</label>
+                      <input 
+                        type="number" 
+                        value={canvasSize.cols}
+                        onChange={(e) => setCanvasSize({ ...canvasSize, cols: parseInt(e.target.value) || 20 })}
+                        className="w-full bg-white/5 border border-white/5 rounded-lg px-3 py-1.5 text-xs text-white focus:outline-none focus:border-cyan-500/30"
+                      />
+                    </div>
+                    <div className="flex flex-col gap-1.5">
+                      <label className="text-[10px] font-bold text-white/30 uppercase tracking-widest">Grid Rows</label>
+                      <input 
+                        type="number" 
+                        value={canvasSize.rows}
+                        onChange={(e) => setCanvasSize({ ...canvasSize, rows: parseInt(e.target.value) || 20 })}
+                        className="w-full bg-white/5 border border-white/5 rounded-lg px-3 py-1.5 text-xs text-white focus:outline-none focus:border-cyan-500/30"
+                      />
+                    </div>
+                  </div>
+                  <div className="pt-2 border-t border-white/5">
+                    <p className="text-[9px] text-white/20 italic italic italic">Resizing adjusts the total workspace area.</p>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
 
           <button 
@@ -465,10 +514,11 @@ const ChartRenderer = ({ type, data, chartType }: { type: string, data: any, cha
 };
 
 const GridBlock = ({ 
-  block, cellSize, isActive, onFocus, onUpdate, onRemove 
+  block, cellSize, gridSize, isActive, onFocus, onUpdate, onRemove 
 }: { 
   block: CanvasBlock, 
   cellSize: number, 
+  gridSize: { cols: number, rows: number },
   isActive: boolean, 
   onFocus: () => void,
   onUpdate: (updates: Partial<CanvasBlock>) => void,
@@ -493,8 +543,8 @@ const GridBlock = ({
       const deltaX = moveEvent.clientX - dragStartPos.current.x;
       const deltaY = moveEvent.clientY - dragStartPos.current.y;
       
-      const newGridX = Math.max(0, Math.min(GRID_COLS - block.gridWidth, dragStartPos.current.gridX + Math.round(deltaX / cellSize)));
-      const newGridY = Math.max(0, Math.min(GRID_ROWS - block.gridHeight, dragStartPos.current.gridY + Math.round(deltaY / cellSize)));
+      const newGridX = Math.max(0, Math.min(gridSize.cols - block.gridWidth, dragStartPos.current.gridX + Math.round(deltaX / cellSize)));
+      const newGridY = Math.max(0, Math.min(gridSize.rows - block.gridHeight, dragStartPos.current.gridY + Math.round(deltaY / cellSize)));
       
       if (newGridX !== block.gridX || newGridY !== block.gridY) {
         onUpdate({ gridX: newGridX, gridY: newGridY });
@@ -525,8 +575,8 @@ const GridBlock = ({
       const deltaX = moveEvent.clientX - resizeStartPos.current.x;
       const deltaY = moveEvent.clientY - resizeStartPos.current.y;
       
-      const newGridW = Math.max(MIN_BLOCK_W, Math.min(GRID_COLS - block.gridX, resizeStartPos.current.gridW + Math.round(deltaX / cellSize)));
-      const newGridH = Math.max(MIN_BLOCK_H, Math.min(GRID_ROWS - block.gridY, resizeStartPos.current.gridH + Math.round(deltaY / cellSize)));
+      const newGridW = Math.max(MIN_BLOCK_W, Math.min(gridSize.cols - block.gridX, resizeStartPos.current.gridW + Math.round(deltaX / cellSize)));
+      const newGridH = Math.max(MIN_BLOCK_H, Math.min(gridSize.rows - block.gridY, resizeStartPos.current.gridH + Math.round(deltaY / cellSize)));
       
       if (newGridW !== block.gridWidth || newGridH !== block.gridHeight) {
         onUpdate({ gridWidth: newGridW, gridHeight: newGridH });

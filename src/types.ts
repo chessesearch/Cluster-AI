@@ -75,9 +75,15 @@ export interface AISuggestion {
 
 export type WorkspaceMode = "floating" | "grid";
 
+export interface TodoItem {
+  id: string;
+  text: string;
+  completed: boolean;
+}
+
 export interface WorkspacePanel {
   id: string;
-  type: "ai" | "data" | "canvas" | "custom";
+  type: "ai" | "data" | "canvas" | "custom" | "todo";
   x: number;
   y: number;
   width: number;
@@ -85,6 +91,7 @@ export interface WorkspacePanel {
   zIndex: number;
   title: string;
   isMaximized?: boolean;
+  config?: any; // To store panel-specific settings (like selected data etc)
 }
 
 export interface LayoutNode {

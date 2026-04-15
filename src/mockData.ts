@@ -153,20 +153,45 @@ export const INITIAL_AI_BLOCKS: AIBlock[] = [
 ];
 
 export const DEFAULT_DASHBOARD_BLOCKS: any[] = [
-  // ROW 1: KPIs & Sales Bar Chart
+  // ROW 1: KPIs
   {
     id: "d1",
     type: "kpi",
     title: "Total sales",
     data: { value: "$ 4,9M", change: "+18%", trend: "up", subtitle: "to previous year" },
-    gridX: 0, gridY: 0, gridWidth: 6, gridHeight: 6
+    gridX: 0, gridY: 0, gridWidth: 15, gridHeight: 12
   },
   {
     id: "d2",
     type: "kpi",
     title: "Total expenses",
     data: { value: "$ 860K", change: "-25%", trend: "down", subtitle: "to previous year" },
-    gridX: 6, gridY: 0, gridWidth: 6, gridHeight: 6
+    gridX: 15, gridY: 0, gridWidth: 15, gridHeight: 12
+  },
+  {
+    id: "d5",
+    type: "kpi",
+    title: "Overall AI impact score",
+    data: { value: "92", subtitle: "based on a weighted average of the KPIs" },
+    gridX: 30, gridY: 0, gridWidth: 15, gridHeight: 12
+  },
+  {
+    id: "d4",
+    type: "kpi",
+    title: "Customer satisfaction score",
+    data: { value: "85%", change: "+15%", trend: "up", subtitle: "to previous year" },
+    gridX: 45, gridY: 0, gridWidth: 15, gridHeight: 12
+  },
+  
+  // ROW 2: Charts (below KPIs)
+  {
+    id: "d6",
+    type: "chart",
+    title: "Customer satisfaction analysis",
+    data: genCSATTrend(),
+    chartType: "line",
+    gridX: 0, gridY: 12, gridWidth: 30, gridHeight: 24,
+    insightText: "CSAT August '24: 350 +21%"
   },
   {
     id: "d3",
@@ -174,34 +199,11 @@ export const DEFAULT_DASHBOARD_BLOCKS: any[] = [
     title: "Sales analytics",
     data: genMonthlySales(),
     chartType: "bar",
-    gridX: 12, gridY: 0, gridWidth: 18, gridHeight: 12,
+    gridX: 30, gridY: 12, gridWidth: 30, gridHeight: 24,
     insightText: "Income: June '24 (AI implementation) $190,350 +25%"
   },
-  // ROW 2: More KPIs (below row 1 KPIs)
-  {
-    id: "d4",
-    type: "kpi",
-    title: "Customer satisfaction score",
-    data: { value: "85%", change: "+15%", trend: "up", subtitle: "to previous year" },
-    gridX: 0, gridY: 6, gridWidth: 6, gridHeight: 6
-  },
-  {
-    id: "d5",
-    type: "kpi",
-    title: "Overall AI impact score",
-    data: { value: "92", subtitle: "based on a weighted average of the KPIs" },
-    gridX: 6, gridY: 6, gridWidth: 6, gridHeight: 6
-  },
-  // ROW 3: Large Bottom Charts
-  {
-    id: "d6",
-    type: "chart",
-    title: "Customer satisfaction analysis",
-    data: genCSATTrend(),
-    chartType: "line",
-    gridX: 0, gridY: 12, gridWidth: 15, gridHeight: 12,
-    insightText: "CSAT August '24: 350 +21%"
-  },
+
+  // RIGHT SIDE: Large Donut Chart spanning both rows
   {
     id: "d7",
     type: "chart",
@@ -214,7 +216,7 @@ export const DEFAULT_DASHBOARD_BLOCKS: any[] = [
       { name: "costs saved", value: 150000, color: "#22d3ee" },
     ],
     chartType: "pie",
-    gridX: 15, gridY: 12, gridWidth: 15, gridHeight: 12,
+    gridX: 60, gridY: 0, gridWidth: 15, gridHeight: 36,
     insightText: "$150,000 costs saved | 30% reduced overstock"
   }
 ];

@@ -34,6 +34,10 @@ interface AppState {
   setDataStorageFullscreen: (val: boolean) => void;
   dataStorageView: "graph" | "tree";
   setDataStorageView: (view: "graph" | "tree") => void;
+  
+  // Canvas Settings
+  canvasSize: { cols: number; rows: number };
+  setCanvasSize: (size: { cols: number; rows: number }) => void;
 }
 
 const { employees, tasks } = generateMockData();
@@ -84,4 +88,8 @@ export const useStore = create<AppState>((set) => ({
   setDataStorageFullscreen: (val) => set({ dataStorageFullscreen: val }),
   dataStorageView: "graph",
   setDataStorageView: (view) => set({ dataStorageView: view }),
+  
+  // Canvas Settings
+  canvasSize: { cols: 75, rows: 75 },
+  setCanvasSize: (size) => set({ canvasSize: size }),
 }));
